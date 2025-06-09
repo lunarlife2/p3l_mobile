@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HistoryPage extends StatefulWidget {
   const HistoryPage({Key? key}) : super(key: key);
@@ -9,8 +10,22 @@ class HistoryPage extends StatefulWidget {
 
 class _HistoryPageState extends State<HistoryPage> {
   int _selectedTab = 0;
+  String? role;
 
   List<String> tabs = ['Proses', 'Selesai', 'Batal'];
+
+  @override
+  void initState() {
+    super.initState();
+    loadRole();
+  }
+
+  Future<void> loadRole() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      role = prefs.getString('role');
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -134,20 +149,23 @@ class _HistoryPageState extends State<HistoryPage> {
         ],
       ),
       // Bottom navigation bar
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Colors.white,
-        selectedItemColor: const Color(0xFF50B794),
-        unselectedItemColor: Colors.grey,
-        currentIndex: 0,
-        onTap: (index) {
-          // handle navigation between pages here
-        },
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
-          BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Merch'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
+      bottomNavigationBar: role == null
+          ? const SizedBox(height: 60, child: Center(child: CircularProgressIndicator()))
+          : BottomNavigationBar(
+              backgroundColor: Colors.white,
+              selectedItemColor: const Color(0xFF50B794),
+              unselectedItemColor: Colors.grey,
+              currentIndex: _selectedTab,
+              onTap: (index) {
+                // handle page switching here
+              },
+              items: [
+                const BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
+                if (role == 'pembeli')
+                  const BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Merch'),
+                const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+              ],
+            ),
     );
   }
 }

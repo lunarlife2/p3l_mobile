@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://127.0.0.1:8000/api';
+  static const String baseUrl = 'http://10.0.2.2:8000/api';
 
   static Future<Map<String, dynamic>> signIn(Map<String, dynamic> data) async {
     final List<Map<String, String>> routes = [
@@ -22,10 +23,24 @@ class ApiService {
 
         if (response.statusCode == 200) {
           final result = jsonDecode(response.body);
-          return { ...result, 'role': route['role'] };
+
+          // Save token and user info locally using SharedPreferences
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('token', result['access_token']);
+          await prefs.setString('user', jsonEncode(result['user']));
+          await prefs.setString('role', route['role']!);
+
+          // Return the result + role info
+          return {
+            'message': result['message'],
+            'user': result['user'],
+            'token': result['access_token'],
+            'token_type': result['token_type'],
+            'role': route['role']
+          };
         }
       } catch (e) {
-        // handle per-request errors if needed
+        print("Login error at ${route['path']}: $e");
       }
     }
 
@@ -50,5 +65,15 @@ class ApiService {
     } else {
       throw Exception('Failed to register');
     }
+  }
+
+  static Future<void> logout() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.remove('token');
+    await prefs.remove('user');
+    await prefs.remove('role');
+
+    print("User logged out successfully.");
   }
 }

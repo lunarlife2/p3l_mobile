@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'history.dart';
 import 'services/api_service.dart';
-import 'services/storage_service.dart';
 
 class LoginApp extends StatelessWidget {
   const LoginApp({super.key});
@@ -15,6 +14,7 @@ class LoginApp extends StatelessWidget {
     );
   }
 }
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -28,37 +28,29 @@ class _LoginScreenState extends State<LoginScreen> {
   final passwordController = TextEditingController();
 
   void _submit() async {
-  if (_formKey.currentState!.validate()) {
-    try {
-      final result = await ApiService.signIn({
-      'username': usernameController.text,
-      'password': passwordController.text,
-    });
-    print('Login Success as ${result['role']}');
+    if (_formKey.currentState!.validate()) {
+      try {
+        final result = await ApiService.signIn({
+          'username': usernameController.text,
+          'password': passwordController.text,
+        });
+        print('Login Success as ${result['role']}');
 
-      if (result['success']) {
-        await StorageService.saveToken(result['token']);
-        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Login Successful')),
         );
         Navigator.push(
-          context, 
-        MaterialPageRoute(
-          builder: (context) => const HistoryPage()));
-      } else {
+          context,
+          MaterialPageRoute(builder: (context) => const HistoryPage()),
+        );
+        print('user: ${result['user']}');
+      } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Invalid credentials')),
+          SnackBar(content: Text('Error: $e')),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
     }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
