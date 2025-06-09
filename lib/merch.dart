@@ -14,10 +14,6 @@ class MerchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Merch'),
-        backgroundColor: Color(0xFF51B995),
-      ),
       body: ListView.builder(
         itemCount: merchItems.length,
         itemBuilder: (context, index) {
@@ -76,24 +72,6 @@ class MerchScreen extends StatelessWidget {
           );
         },
       ),
-      // Bottom navigation bar
-      bottomNavigationBar: role == null
-          ? const SizedBox(height: 60, child: Center(child: CircularProgressIndicator()))
-          : BottomNavigationBar(
-              backgroundColor: Colors.white,
-              selectedItemColor: const Color(0xFF50B794),
-              unselectedItemColor: Colors.grey,
-              currentIndex: _selectedTab,
-              onTap: (index) {
-                // handle page switching here
-              },
-              items: [
-                const BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
-                if (role == 'pembeli')
-                  const BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Merch'),
-                const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-              ],
-            ),
     );
   }
 }

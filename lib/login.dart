@@ -41,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const HistoryPage()),
+          MaterialPageRoute(builder: (context) => const MainPage()),
         );
         print('user: ${result['user']}');
       } catch (e) {

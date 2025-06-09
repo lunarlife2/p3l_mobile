@@ -41,30 +41,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFEFF2F4),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF50B794),
-        title: const Text('History', style: TextStyle(color: Colors.white)),
-        centerTitle: true,
-      ),
       body: SafeArea(
         child: user == null
             ? Center(child: CircularProgressIndicator())
             : Column(
                 children: [
-                  Container(
-                    padding: EdgeInsets.all(16),
-                    color: Color(0xFF51B995),
-                    width: double.infinity,
-                    child: Text(
-                      'Profile',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 20),
+                  SizedBox(height: 40),
                   CircleAvatar(
                     radius: 50,
                     backgroundImage: NetworkImage(user!['photo'] ??
@@ -131,24 +113,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
               ),
       ),
-     // Bottom navigation bar
-      bottomNavigationBar: role == null
-          ? const SizedBox(height: 60, child: Center(child: CircularProgressIndicator()))
-          : BottomNavigationBar(
-              backgroundColor: Colors.white,
-              selectedItemColor: const Color(0xFF50B794),
-              unselectedItemColor: Colors.grey,
-              currentIndex: _selectedTab,
-              onTap: (index) {
-                // handle page switching here
-              },
-              items: [
-                const BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
-                if (role == 'pembeli')
-                  const BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Merch'),
-                const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-              ],
-            ),
     );
   }
 

@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:mobile_p3l/merch.dart';
+import 'package:mobile_p3l/profile.dart';
 
-class HistoryPage extends StatefulWidget {
-  const HistoryPage({Key? key}) : super(key: key);
+class MainPage extends StatefulWidget {
+  const MainPage({Key? key}) : super(key: key);
 
   @override
-  State<HistoryPage> createState() => _HistoryPageState();
+  State<MainPage> createState() => _MainPageState();
 }
 
-class _HistoryPageState extends State<HistoryPage> {
-  int _selectedTab = 0;
+class _MainPageState extends State<MainPage> {
+  int _selectedIndex = 0;
   String? role;
-
-  List<String> tabs = ['Proses', 'Selesai', 'Batal'];
 
   @override
   void initState() {
@@ -27,17 +27,93 @@ class _HistoryPageState extends State<HistoryPage> {
     });
   }
 
+  List<Widget> get _pages {
+    List<Widget> pages = [
+      const HistoryPage(),
+    ];
+    if (role == 'pembeli') {
+      pages.add(MerchScreen());
+    }
+    pages.add(ProfileScreen());
+    return pages;
+  }
+
+  List<String> get _titles {
+    List<String> titles = ['History'];
+    if (role == 'pembeli') {
+      titles.add('Merch');
+    }
+    titles.add('Profile');
+    return titles;
+  }
+
+  List<BottomNavigationBarItem> get _navItems {
+    List<BottomNavigationBarItem> items = [
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.history),
+        label: 'History',
+      ),
+    ];
+    if (role == 'pembeli') {
+      items.add(const BottomNavigationBarItem(
+        icon: Icon(Icons.store),
+        label: 'Merch',
+      ));
+    }
+    items.add(const BottomNavigationBarItem(
+      icon: Icon(Icons.person),
+      label: 'Profile',
+    ));
+    return items;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEFF2F4),
       appBar: AppBar(
+        title: Text(
+          role == null ? '' : _titles[_selectedIndex],
+        ),
         backgroundColor: const Color(0xFF50B794),
-        title: const Text('History', style: TextStyle(color: Colors.white)),
+        foregroundColor: Colors.white,
         centerTitle: true,
       ),
-      body: Column(
-        children: [
+      body: role == null
+          ? const Center(child: CircularProgressIndicator())
+          : _pages[_selectedIndex],
+      bottomNavigationBar: role == null
+          ? const SizedBox(height: 0)
+          : BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              selectedItemColor: const Color(0xFF50B794),
+              unselectedItemColor: Colors.grey,
+              onTap: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+              items: _navItems,
+            ),
+    );
+  }
+}
+
+class HistoryPage extends StatefulWidget {
+  const HistoryPage({super.key});
+
+  @override
+  State<HistoryPage> createState() => _HistoryPageState();
+}
+
+class _HistoryPageState extends State<HistoryPage> {
+  List<String> tabs = ['Proses', 'Selesai', 'Batal'];
+  int _selectedTab = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        backgroundColor: const Color(0xFFEFF2F4),
+        body: Column(children: [
           // Tab buttons
           Padding(
             padding: const EdgeInsets.all(12.0),
@@ -92,8 +168,9 @@ class _HistoryPageState extends State<HistoryPage> {
                       children: [
                         Text("Order date : 19 April 2025"),
                         const SizedBox(height: 4),
-                        Text("Order Id : PM-1234", style: const TextStyle(fontWeight: FontWeight.bold)),
-
+                        Text("Order Id : PM-1234",
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
                         const SizedBox(height: 12),
                         Row(
                           children: [
@@ -108,9 +185,12 @@ class _HistoryPageState extends State<HistoryPage> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: const [
-                                  Text("Samsung Kulkas 2 Pintu 203L | AntiBacterial | Hemat Energi | All around Cooling | RT19M300BGS"),
+                                  Text(
+                                      "Samsung Kulkas 2 Pintu 203L | AntiBacterial | Hemat Energi | All around Cooling | RT19M300BGS"),
                                   SizedBox(height: 4),
-                                  Text("Rp 8.500.000", style: TextStyle(fontWeight: FontWeight.bold)),
+                                  Text("Rp 8.500.000",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
                                 ],
                               ),
                             ),
@@ -118,11 +198,12 @@ class _HistoryPageState extends State<HistoryPage> {
                         ),
                         const SizedBox(height: 8),
                         const Text("+1 produk lainnya"),
-
                         const Divider(height: 20, thickness: 1),
-                        const Text("Total Belanja", style: TextStyle(fontWeight: FontWeight.w600)),
-                        const Text("Rp 16.250.000", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-
+                        const Text("Total Belanja",
+                            style: TextStyle(fontWeight: FontWeight.w600)),
+                        const Text("Rp 16.250.000",
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16)),
                         const SizedBox(height: 12),
                         SizedBox(
                           width: double.infinity,
@@ -146,26 +227,6 @@ class _HistoryPageState extends State<HistoryPage> {
               },
             ),
           ),
-        ],
-      ),
-      // Bottom navigation bar
-      bottomNavigationBar: role == null
-          ? const SizedBox(height: 60, child: Center(child: CircularProgressIndicator()))
-          : BottomNavigationBar(
-              backgroundColor: Colors.white,
-              selectedItemColor: const Color(0xFF50B794),
-              unselectedItemColor: Colors.grey,
-              currentIndex: _selectedTab,
-              onTap: (index) {
-                // handle page switching here
-              },
-              items: [
-                const BottomNavigationBarItem(icon: Icon(Icons.history), label: 'History'),
-                if (role == 'pembeli')
-                  const BottomNavigationBarItem(icon: Icon(Icons.store), label: 'Merch'),
-                const BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-              ],
-            ),
-    );
+        ]));
   }
 }
