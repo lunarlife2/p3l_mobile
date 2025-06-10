@@ -7,10 +7,10 @@ class ApiService {
 
   static Future<Map<String, dynamic>> signIn(Map<String, dynamic> data) async {
     final List<Map<String, String>> routes = [
-      { 'path': '/loginPembeli', 'role': 'pembeli' },
-      { 'path': '/loginPenitip', 'role': 'penitip' },
-      { 'path': '/loginOrganisasi', 'role': 'organisasi' },
-      { 'path': '/loginPegawai', 'role': 'pegawai' },
+      {'path': '/loginPembeli', 'role': 'pembeli'},
+      {'path': '/loginPenitip', 'role': 'penitip'},
+      {'path': '/loginOrganisasi', 'role': 'organisasi'},
+      {'path': '/loginPegawai', 'role': 'pegawai'},
     ];
 
     for (final route in routes) {
@@ -48,7 +48,8 @@ class ApiService {
     throw Exception('Login failed: User not found or wrong credentials.');
   }
 
-  static Future<Map<String, dynamic>> register(String username, String password, String email, String phone) async {
+  static Future<Map<String, dynamic>> register(
+      String username, String password, String email, String phone) async {
     final response = await http.post(
       Uri.parse('$baseUrl/register'),
       headers: {'Content-Type': 'application/json'},
@@ -67,13 +68,97 @@ class ApiService {
     }
   }
 
-  static Future<void> logout() async {
+  static Future<Map<String, dynamic>> logout() async {
     final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
 
-    await prefs.remove('token');
-    await prefs.remove('user');
-    await prefs.remove('role');
+    if (token == null) {
+      throw Exception('No token found.');
+    }
 
-    print("User logged out successfully.");
+    final List<Map<String, String>> routes = [
+      {'path': '/logoutPembeli', 'role': 'pembeli'},
+      {'path': '/logoutPenitip', 'role': 'penitip'},
+      {'path': '/logoutOrganisasi', 'role': 'organisasi'},
+      {'path': '/logoutPegawai', 'role': 'pegawai'},
+    ];
+
+    for (final route in routes) {
+      try {
+        final response = await http.post(
+          Uri.parse('${baseUrl}${route['path']}'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final result = jsonDecode(response.body);
+
+          // Clear local storage after successful logout
+          await prefs.remove('token');
+          await prefs.remove('user');
+          await prefs.remove('role');
+
+          print("User logged out successfully.");
+          return {
+            'message': result['message'],
+          };
+        } else {
+          print("Logout failed with status code ${response.statusCode}");
+        }
+      } catch (e) {
+        print("Logout error: $e");
+      }
+    }
+    throw Exception('Logout error.');
+  }
+
+  static Future<Map<String, dynamic>> showLoggedInUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final role = prefs.getString('role');
+    final token = prefs.getString('token');
+    String path;
+
+    if (role == null) {
+      throw Exception('No role found.');
+    } else if (role == 'pembeli') {
+      path = '/PembeliData';
+    } else if (role == 'penitip') {
+      path = '/PenitipData';
+    } else if (role == 'organisasi') {
+      path = '/OrganisasiData';
+    } else if (role == 'pegawai') {
+      path = '/PegawaiData';
+    } else {
+      throw Exception('Invalid role.');
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl$path'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final result = jsonDecode(response.body);
+
+        print("User data retreived successfully. ${result['data']}");
+        return {
+          'message': result['message'],
+          'data': result['data'],
+        };
+      } else {
+        print("Get data failed with status code ${response.statusCode}");
+        throw Exception('Failed to retrieve data.');
+      }
+    } catch (e) {
+      print("Get user data error: $e");
+      throw Exception('Ambil user data error.');
+    }
   }
 }

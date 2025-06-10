@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_p3l/login.dart';
 import 'package:mobile_p3l/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -21,11 +22,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> loadUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userString = prefs.getString('user');
-    if (userString != null) {
+    final prefs = await ApiService.showLoggedInUser();
+    final userData = prefs['data'];
+    if (userData != null) {
       setState(() {
-        user = jsonDecode(userString);
+        user = userData;
+        print('user data: $user');
       });
     }
   }
@@ -49,8 +51,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   SizedBox(height: 40),
                   CircleAvatar(
                     radius: 50,
-                    backgroundImage: NetworkImage(user!['photo'] ??
-                        'https://via.placeholder.com/150'),
+                    backgroundImage: NetworkImage(
+                        user!['photo'] ?? 'https://via.placeholder.com/150'),
                   ),
                   SizedBox(height: 12),
                   Text(
@@ -60,13 +62,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Text(
-                    'Poin : ${user!['poin'] ?? 0}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
-                  ),
+                  (role == 'pembeli' || role == 'penitip')
+                      ? Text(
+                          'Poin : ${user!['poin'] ?? 0}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
+                        )
+                      : SizedBox.shrink(),
                   SizedBox(height: 12),
                   SizedBox(
                     width: 160,
@@ -89,15 +93,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         buildProfileDetail('Name', user!['name'] ?? ''),
                         buildProfileDetail('Email', user!['email'] ?? ''),
-                        buildProfileDetail('Phone', user!['phone'] ?? ''),
-                        buildProfileDetail(
-                            'Username', user!['username'] ?? ''),
+                        buildProfileDetail('Phone', user!['no_telp'] ?? ''),
+                        buildProfileDetail('Username', user!['username'] ?? ''),
                         SizedBox(height: 20),
                         Divider(),
                         InkWell(
+                          customBorder: Border.all(),
+                          borderRadius: const BorderRadius.all(Radius.circular(5)),
                           onTap: () async {
                             await ApiService.logout();
-                            Navigator.pushReplacementNamed(context, '/login');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text('Logout Successful')),
+                            );
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(
+                                  builder: (context) => const LoginApp()),
+                              (Route<dynamic> route) => false,
+                            );
                           },
                           child: Text(
                             'Logout',
