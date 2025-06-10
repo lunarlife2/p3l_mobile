@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_p3l/login.dart';
+import 'package:mobile_p3l/screens/dashboard_screen.dart';
 import 'package:mobile_p3l/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -32,6 +33,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  String getProfileImage(String? role, String? idJabatan) {
+    if (role == 'pembeli' || role == 'penitip') {
+      return 'assets/images/$role.jpeg';
+    } else {
+      if (idJabatan == "J-7671") {
+      return 'assets/images/kurir.jpeg';
+    } else if (idJabatan == "J-6697") {
+      return 'assets/images/hunter.jpeg';
+    } else {
+      return 'assets/images/default_profile.png'; // fallback
+    }
+  }
+    }
+
   Future<void> loadRole() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
@@ -51,8 +66,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   SizedBox(height: 40),
                   CircleAvatar(
                     radius: 50,
-                    backgroundImage: NetworkImage(
-                        user!['photo'] ?? 'https://via.placeholder.com/150'),
+                    backgroundImage: AssetImage(
+                      getProfileImage(role, user?['id_jabatan']),
+                    ),
                   ),
                   SizedBox(height: 12),
                   Text(
@@ -99,7 +115,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         Divider(),
                         InkWell(
                           customBorder: Border.all(),
-                          borderRadius: const BorderRadius.all(Radius.circular(5)),
+                          borderRadius:
+                              const BorderRadius.all(Radius.circular(5)),
                           onTap: () async {
                             await ApiService.logout();
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -108,7 +125,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             );
                             Navigator.of(context).pushAndRemoveUntil(
                               MaterialPageRoute(
-                                  builder: (context) => const LoginApp()),
+                                  builder: (context) => const DashboardScreen()),
                               (Route<dynamic> route) => false,
                             );
                           },

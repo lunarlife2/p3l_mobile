@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_p3l/screens/dashboard_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_p3l/merch.dart';
 import 'package:mobile_p3l/profile.dart';
@@ -33,6 +34,7 @@ class _MainPageState extends State<MainPage> {
     ];
     if (role == 'pembeli') {
       pages.add(MerchScreen());
+      pages.add(const DashboardContent());
     }
     pages.add(ProfileScreen());
     return pages;
@@ -42,6 +44,7 @@ class _MainPageState extends State<MainPage> {
     List<String> titles = ['History'];
     if (role == 'pembeli') {
       titles.add('Merch');
+      titles.add('Home');
     }
     titles.add('Profile');
     return titles;
@@ -58,6 +61,10 @@ class _MainPageState extends State<MainPage> {
       items.add(const BottomNavigationBarItem(
         icon: Icon(Icons.store),
         label: 'Merch',
+      ));
+      items.add(const BottomNavigationBarItem(
+        icon: Icon(Icons.home),
+        label: 'Home',
       ));
     }
     items.add(const BottomNavigationBarItem(
@@ -175,7 +182,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         Row(
                           children: [
                             Image.asset(
-                              'assets/fridge.png',
+                              'assets/images/hunter.jpeg',
                               width: 60,
                               height: 60,
                               fit: BoxFit.cover,

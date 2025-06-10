@@ -64,6 +64,10 @@ flutter:
     - assets/images/hero1.png
     - assets/images/hero2.png
     - assets/images/hero3.png
+    - assets/images/kurir.jpeg
+    - assets/images/hunter.jpeg
+    - assets/images/penitip.jpeg
+    - assets/images/pembeli.jpeg
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
