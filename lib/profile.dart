@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_p3l/login.dart';
 import 'package:mobile_p3l/screens/dashboard_screen.dart';
+import 'package:mobile_p3l/services/api_barang.dart';
 import 'package:mobile_p3l/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -14,13 +15,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? user;
   int _selectedTab = 0;
   String? role;
+  int? countHunter;
+  int? komisiHunter;
 
   @override
   void initState() {
     super.initState();
-    loadUser();
-    loadRole();
+    initData();
   }
+
+  Future<void> initData() async {
+  await loadUser();
+  await loadRole();
+  await fetchPenitipanCount();
+  await fetchKomisiCount();
+}
 
   Future<void> loadUser() async {
     final prefs = await ApiService.showLoggedInUser();
@@ -31,6 +40,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
         print('user data: $user');
       });
     }
+  }
+
+  Future<void> fetchPenitipanCount() async {
+    final idPegawai = int.parse(user!['id_pegawai']);
+    final apiBarang = ApiBarang();
+    final count = await apiBarang.countPenitipanBarangByHunter(idPegawai);
+
+    setState(() {
+      countHunter = count;
+      print("Inside setState - countHunter: $countHunter");
+    });
+  }
+
+  Future<void> fetchKomisiCount() async {
+    final idPegawai = int.parse(user!['id_pegawai']);
+    final apiBarang = ApiBarang();
+    final count = await apiBarang.countTotalKomisiHunter(idPegawai);
+
+    setState(() {
+      komisiHunter = count;
+    });
   }
 
   String getProfileImage(String? role, String? idJabatan) {
@@ -81,6 +111,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   (role == 'pembeli' || role == 'penitip')
                       ? Text(
                           'Poin : ${user!['poin'] ?? 0}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
+                        )
+                      : SizedBox.shrink(),
+                  (user != null && role == 'pegawai' && user?['id_jabatan'] == "J-6697")
+                      ? Text(
+                          'Jumlah Komisi : $countHunter',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
+                        )
+                      : SizedBox.shrink(),
+                  SizedBox(height: 12),
+                  (role == 'penitip')
+                      ? Text(
+                          'Saldo : ${user!['saldo'] ?? 0}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
+                        )
+                      : SizedBox.shrink(),
+                  (user != null && role == 'pegawai' && user?['id_jabatan'] == "J-6697")
+                      ? Text(
+                          'Total Saldo Komisi : $komisiHunter',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.grey[600],
