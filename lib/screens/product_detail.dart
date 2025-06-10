@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:intl/date_symbol_data_local.dart'; // <--- import ini wajib
+import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:mobile_p3l/services/api_barang.dart';
 import 'package:mobile_p3l/services/api_category.dart';
@@ -34,8 +35,8 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
   }
 
   Future<void> _initializeLocaleAndData() async {
-    await initializeDateFormatting('id_ID', null);  // Inisialisasi locale ID
-    _checkLogin();
+    await initializeDateFormatting('id_ID', null);
+    await _checkLogin();
     await _fetchProductData();
   }
 
@@ -45,10 +46,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     super.dispose();
   }
 
-  void _checkLogin() {
-    // TODO: Implementasi cek token shared_preferences atau secure_storage
+  Future<void> _checkLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
+
     setState(() {
-      isLoggedIn = true; // sementara true supaya tombol Add to Cart muncul
+      isLoggedIn = token != null && token.isNotEmpty;
     });
   }
 
@@ -74,10 +77,11 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
 
       final categoryData = await ApiCategory.getCategories();
 
-      final galleryData = await ApiGallery.getGalleryByBarangId(selectedProduct['id_barang'].toString());
+      final galleryData = await ApiGallery.getGalleryByBarangId(
+          selectedProduct['id_barang'].toString());
 
       Map<String, dynamic>? penitipData;
-      if (selectedProduct['id_penitip'] != null) {
+      if (isLoggedIn && selectedProduct['id_penitip'] != null) {
         int? idPenitipInt;
 
         if (selectedProduct['id_penitip'] is int) {
@@ -143,7 +147,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
       children: [
         SizedBox(
           width: 300,
-          height: 300,  // persegi sama sisi
+          height: 300,
           child: PageView.builder(
             controller: _pageController,
             itemCount: gallery.length,
@@ -227,7 +231,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF50B794), // Warna hijau sesuai permintaan
+                color: Color(0xFF50B794),
               ),
             ),
             const SizedBox(height: 8),
@@ -242,7 +246,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
             const SizedBox(height: 6),
             Text(product!['deskripsi'] ?? '-'),
             const SizedBox(height: 30),
-            if (penitip != null)
+            if (isLoggedIn && penitip != null)
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -292,7 +296,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                 ],
               ),
             const SizedBox(height: 30),
-            // Placeholder ProductDiscussion (React punya, Flutter bisa implementasi nanti)
+            // ProductDiscussion (opsional untuk dikembangkan)
           ],
         ),
       ),

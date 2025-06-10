@@ -133,7 +133,8 @@ class _ProductByCategoryPageState extends State<ProductByCategoryPage> {
 
                   return GestureDetector(
                     onTap: () {
-                      Navigator.pushNamed(context, '/products/${item['id_barang']}');
+                      Navigator.pushNamed(
+                          context, '/products/${item['id_barang']}');
                     },
                     child: Card(
                       elevation: 2,
@@ -143,14 +144,19 @@ class _ProductByCategoryPageState extends State<ProductByCategoryPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ClipRRect(
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(12),
-                            ),
-                            child: Image.network(
-                              photoUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const Icon(Icons.broken_image),
+                          AspectRatio(
+                            aspectRatio: 1, // Bikin gambar persegi
+                            child: ClipRRect(
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(12),
+                              ),
+                              child: Image.network(
+                                photoUrl,
+                                fit: BoxFit.cover,
+                                width: double.infinity,
+                                errorBuilder: (_, __, ___) =>
+                                    const Icon(Icons.broken_image),
+                              ),
                             ),
                           ),
                           Padding(
