@@ -282,7 +282,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                               if (penitip!['badge'] == true) ...[
                                 const SizedBox(width: 6),
                                 const Icon(Icons.workspace_premium,
-                                    color: Colors.blue, size: 18),
+                                    color: Colors.blue, size: 25),
                               ],
                             ],
                           ),
