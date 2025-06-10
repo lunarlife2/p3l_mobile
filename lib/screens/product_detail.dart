@@ -209,7 +209,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(product!['nama_barang'] ?? "Detail Produk")),
+      appBar:AppBar(
+        backgroundColor: const Color(0xFF50B794),
+        title: Text(product!['nama_barang'] ?? "Detail Produk",
+            style: TextStyle(color: Colors.white)),
+        centerTitle: true,
+      ), 
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
