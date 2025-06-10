@@ -311,11 +311,9 @@ class _HistoryPageState extends State<HistoryPage> {
                                   ? 'Tanggal Pembelian: ${formatTanggal(order['tanggal_pembelian'])}'
                                   : 'Tanggal Penitipan: ${formatTanggal(order['tanggal_penitipan'])}'),
                               const SizedBox(height: 4),
-                              Text(
-                                role == 'pembeli'
-                                    ? 'Batas Bayar: ${formatTanggal(order['batas_waktu'])}'
-                                    : 'Kadaluarsa: ${formatTanggal(order['tanggal_kadaluarsa'])}',
-                              ),
+                              Text(role == 'pembeli'
+                                  ? 'Tanggal Selesai: ${formatTanggal((order as Map<String, dynamic>)['tanggal_pengiriman-pengambilan'])}'
+                                  : 'Kadaluarsa: ${formatTanggal(order['tanggal_kadaluarsa'])}'),
                               const SizedBox(height: 12),
                               Row(
                                 children: [
