@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'history.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'services/api_service.dart';
+import 'history.dart'; // pastikan MainPage ada di sini
 
 class LoginApp extends StatelessWidget {
   const LoginApp({super.key});
@@ -10,7 +11,7 @@ class LoginApp extends StatelessWidget {
     return const MaterialApp(
       title: 'Login UI',
       debugShowCheckedModeBanner: false,
-      home: const LoginScreen(),
+      home: LoginScreen(),
     );
   }
 }
@@ -30,23 +31,60 @@ class _LoginScreenState extends State<LoginScreen> {
   void _submit() async {
     if (_formKey.currentState!.validate()) {
       try {
+        print('[DEBUG] Login request started...');
         final result = await ApiService.signIn({
           'username': usernameController.text,
           'password': passwordController.text,
         });
-        print('Login Success as ${result['role']}');
+
+        print('[DEBUG] Login success. Response: $result');
+
+        final prefs = await SharedPreferences.getInstance();
+
+        final role = result['role'];
+        final token = result['token'];
+        final user = result['user'];
+
+        print('[DEBUG] Saving role and token...');
+        await prefs.setString('role', role);
+        await prefs.setString('token', token);
+
+        if (role == 'pembeli') {
+          if (user.containsKey('id_pembeli')) {
+            final idPembeli = int.tryParse(user['id_pembeli'].toString());
+            if (idPembeli != null) {
+              print('[DEBUG] Saving id_pembeli: $idPembeli');
+              await prefs.setInt('id_pembeli', idPembeli);
+            } else {
+              print('[ERROR] id_pembeli is not a valid integer!');
+            }
+          }
+        } else {
+          if (user.containsKey('id_penitip')) {
+            final idPenitip = int.tryParse(user['id_penitip'].toString());
+            if (idPenitip != null) {
+              print('[DEBUG] Saving id_penitip: $idPenitip');
+              await prefs.setInt('id_penitip', idPenitip);
+            } else {
+              print('[ERROR] id_penitip is not a valid integer!');
+            }
+          }
+        }
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Login Successful')),
         );
-        Navigator.push(
+
+        print('[DEBUG] Navigating to MainPage...');
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const MainPage()),
         );
-        print('user: ${result['user']}');
-      } catch (e) {
+      } catch (e, stacktrace) {
+        print('[ERROR] Login failed: $e');
+        print('[STACKTRACE] $stacktrace');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+          SnackBar(content: Text('Login Failed: $e')),
         );
       }
     }
@@ -89,31 +127,33 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: 30),
                             buildLabel('Username'),
                             buildTextFormField(
-                                controller: usernameController,
-                                icon: Icons.person,
-                                hint: 'Username',
-                                obscure: false,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter username';
-                                  }
-                                  return null;
-                                }),
+                              controller: usernameController,
+                              icon: Icons.person,
+                              hint: 'Username',
+                              obscure: false,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter username';
+                                }
+                                return null;
+                              },
+                            ),
                             const SizedBox(height: 20),
                             buildLabel('Password'),
                             buildTextFormField(
-                                controller: passwordController,
-                                icon: Icons.lock,
-                                hint: 'Password',
-                                obscure: true,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter password';
-                                  } else if (value.length < 6) {
-                                    return 'Password must be at least 6 characters';
-                                  }
-                                  return null;
-                                }),
+                              controller: passwordController,
+                              icon: Icons.lock,
+                              hint: 'Password',
+                              obscure: true,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter password';
+                                } else if (value.length < 6) {
+                                  return 'Password must be at least 6 characters';
+                                }
+                                return null;
+                              },
+                            ),
                             const SizedBox(height: 30),
                             SizedBox(
                               width: double.infinity,
@@ -162,12 +202,13 @@ Widget buildLabel(String text) {
   );
 }
 
-Widget buildTextFormField(
-    {required TextEditingController controller,
-    required IconData icon,
-    required String hint,
-    required bool obscure,
-    String? Function(String?)? validator}) {
+Widget buildTextFormField({
+  required TextEditingController controller,
+  required IconData icon,
+  required String hint,
+  required bool obscure,
+  String? Function(String?)? validator,
+}) {
   return TextFormField(
     controller: controller,
     obscureText: obscure,

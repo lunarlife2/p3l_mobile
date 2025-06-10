@@ -153,17 +153,6 @@ class _ProductListState extends State<ProductList> {
                       ),
                     ),
                   ),
-                  Spacer(),
-                  if (role == 'pembeli')
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          // TODO: Add to Cart action
-                        },
-                        child: Text("Add to Cart"),
-                      ),
-                    ),
                 ],
               ),
             ),
