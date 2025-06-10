@@ -101,6 +101,7 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
         gallery = galleryData;
         penitip = penitipData;
         loading = false;
+        print("PENITIP: $penitip");
       });
     } catch (e) {
       print("Error fetching data: $e");
@@ -208,7 +209,12 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text(product!['nama_barang'] ?? "Detail Produk")),
+      appBar:AppBar(
+        backgroundColor: const Color(0xFF50B794),
+        title: Text(product!['nama_barang'] ?? "Detail Produk",
+            style: TextStyle(color: Colors.white)),
+        centerTitle: true,
+      ), 
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -269,10 +275,21 @@ class _ProductDetailPageState extends State<ProductDetailPage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            penitip!['name'] ?? penitip!['nama'] ?? '-',
-                            style: const TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold),
+                          Row(
+                            children: [
+                              Text(
+                                penitip!['name'] ?? penitip!['nama'] ?? '-',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              if (penitip!['badge'] == true) ...[
+                                const SizedBox(width: 6),
+                                const Icon(Icons.workspace_premium,
+                                    color: Colors.blue, size: 25),
+                              ],
+                            ],
                           ),
                           Row(
                             children: [

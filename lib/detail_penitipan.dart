@@ -19,8 +19,8 @@ class DetailPenitipanPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final filteredPegawai =
-        pegawai.where((p) => p['id_jabatan'] == 'J-1166').toList();
+    // final filteredPegawai =
+    //     pegawai.where((p) => p['id_jabatan'] == 'J-1166').toList();
 
     final bool isKadaluarsa = data['status'] == 'Kadaluarsa';
     final bool isDiKembalikan = data['status'] == 'DiKembalikan';
@@ -51,11 +51,11 @@ class DetailPenitipanPage extends StatelessWidget {
       return buildDisplayRow(label, value ? "Ya" : "Tidak");
     }
 
-    String getPegawaiName(dynamic id) {
-      final peg = filteredPegawai.firstWhere((p) => p['id_pegawai'] == id,
-          orElse: () => {});
-      return peg['name'] ?? '-';
-    }
+    // String getPegawaiName(dynamic id) {
+    //   final peg = filteredPegawai.firstWhere((p) => p['id_pegawai'] == id,
+    //       orElse: () => {});
+    //   return peg['name'] ?? '-';
+    // }
 
     String getKategoriName(dynamic id) {
       final kat =

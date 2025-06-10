@@ -147,7 +147,6 @@ class ApiService {
       if (response.statusCode == 200) {
         final result = jsonDecode(response.body);
 
-        print("User data retreived successfully. ${result['data']}");
         return {
           'message': result['message'],
           'data': result['data'],

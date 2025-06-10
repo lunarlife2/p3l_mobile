@@ -355,7 +355,7 @@ class _HistoryPageState extends State<HistoryPage> {
                           imageUrl = '$backendBaseUrl/storage/FotoBarang/$foto';
                         }
                       } else {
-                        final foto = order['gallery'];
+                        // final foto = order['gallery'];
                         // print('foto_barang penitip: ${order['gallery']}');
                         if (order['gallery'] != null &&
                             order['gallery'] is List &&
