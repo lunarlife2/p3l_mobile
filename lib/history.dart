@@ -109,12 +109,12 @@ class _HistoryPageState extends State<HistoryPage> {
   int _selectedTab = 0;
   List<dynamic> _orders = [];
   String? role;
+  String? idJabatan;
   int? userId;
   String? token;
   bool _loading = true;
   List<Map<String, dynamic>> _kategori = [];
   List<Map<String, dynamic>> _pegawai = [];
-
   final String backendBaseUrl = 'http://10.0.2.2:8000';
 
   @override
@@ -127,18 +127,69 @@ class _HistoryPageState extends State<HistoryPage> {
     final prefs = await SharedPreferences.getInstance();
     role = prefs.getString('role');
     token = prefs.getString('token');
-    userId = role == 'pembeli'
-        ? prefs.getInt('id_pembeli')
-        : prefs.getInt('id_penitip');
+    String? userDataString = prefs.getString('user');
+    if (userDataString != null) {
+      Map<String, dynamic> userData = json.decode(userDataString);
+      idJabatan = userData['id_jabatan'];
+      if (role == 'pembeli') {
+        userId = prefs.getInt('id_pembeli') ?? 0;
+      } else if (role == 'penitip') {
+        userId = prefs.getInt('id_penitip') ?? 0;
+      } else if (role == 'pegawai') {
+        userId = int.tryParse(userData['id_pegawai'].toString())  ?? 0;
+      } else {
+        userId = 0;
+        print('Warning: Unrecognized or missing role.');
+      }
+    }
 
-    statuses = role == 'pembeli'
-        ? ['Proses', 'Selesai', 'Batal']
-        : ['DiJual', 'DiDonasikan', 'DiKembalikan', 'DiBeli', 'Kadaluarsa'];
+    // userId = role == 'pembeli'
+    //     ? prefs.getInt('id_pembeli')
+    //     : prefs.getInt('id_penitip');
+    //     //if role pegawai  prefs.getInt('id_pegawai')
+
+    // statuses = role == 'pembeli'
+    //     ? ['Proses', 'Selesai', 'Batal']
+    //     : ['DiJual', 'DiDonasikan', 'DiKembalikan', 'DiBeli', 'Kadaluarsa'];
+    //     // : ['DiJual', 'DiDonasikan', 'DiKembalikan', 'DiBeli', 'Kadaluarsa']; -> if role == pegawai and id_jabatan == J-6697 using // user?['id_jabatan'] or prefs.getString('id_jabatan')
+    //     // ? ['Pegiriman', 'Sampai', 'DiSiapkan']  -> if role == pegawai and id_jabatan == J-7671 using // user?['id_jabatan'] or prefs.getString('id_jabatan');
+    // print(idJabatan);
+
+    if (role == 'pembeli') {
+      statuses = ['Proses', 'Selesai', 'Batal'];
+    } else if (role == 'pegawai') {
+      if (idJabatan == 'J-6697') {
+        statuses = [
+          'DiJual',
+          'DiDonasikan',
+          'DiKembalikan',
+          'DiBeli',
+          'Kadaluarsa'
+        ];
+      } else if (idJabatan == 'J-7671') {
+        statuses = ['Pegiriman', 'Sampai', 'DiSiapkan'];
+      } else {
+        statuses = [];
+        print('Warning: Unrecognized id_jabatan for pegawai role.');
+      }
+    } else if (role == 'penitip') {
+      statuses = [
+        'DiJual',
+        'DiDonasikan',
+        'DiKembalikan',
+        'DiBeli',
+        'Kadaluarsa'
+      ];
+    } else {
+      statuses = [];
+      print('Warning: Unrecognized or missing role for status determination.');
+    }
 
     await _fetchOrders();
     print('Role: $role, Token: $token, UserId: $userId');
   }
 
+// user?['id_jabatan']
   String formatTanggal(String? isoDate) {
     if (isoDate == null || isoDate.isEmpty) return '-';
     try {
@@ -153,9 +204,23 @@ class _HistoryPageState extends State<HistoryPage> {
       _loading = true;
     });
 
-    final url = role == 'pembeli'
-        ? '$backendBaseUrl/api/Pembelian/Pembeli/$userId'
-        : '$backendBaseUrl/api/PenitipanBarang/Penitip/$userId';
+    String url;
+
+    if (role == 'pembeli') {
+      url = '$backendBaseUrl/api/Pembelian/Pembeli/$userId';
+    } else if (role == 'penitip') {
+      url = '$backendBaseUrl/api/PenitipanBarang/Penitip/$userId';
+    } else if (role == 'pegawai') {
+      if (idJabatan == 'J-7671') {
+        url = '$backendBaseUrl/api/Pembelian/Kurir/$userId';
+      } else if (idJabatan == 'J-6697') {
+        url = '$backendBaseUrl/api/PenitipanBarang/Hunter/$userId';
+      } else {
+        url = '$backendBaseUrl/api/Pegawai/Default/$userId';
+      }
+    } else {
+      url = '$backendBaseUrl/api/UnknownRole/$userId';
+    }
 
     final response = await http.get(Uri.parse(url), headers: {
       'Content-Type': 'application/json',
@@ -166,6 +231,7 @@ class _HistoryPageState extends State<HistoryPage> {
       final data = jsonDecode(response.body)['data'];
 
       if (role != 'pembeli') {
+        // if role != pembeli or ( pegawai where id jabatan == J-6697)
         // Fetch kategori
         final kategoriRes = await http.get(
           Uri.parse('$backendBaseUrl/api/Kategori'),
@@ -220,8 +286,14 @@ class _HistoryPageState extends State<HistoryPage> {
     final filteredOrders = _orders.where((order) {
       if (role == 'pembeli') {
         return order['status'] == activeStatus;
-      } else {
+      } else if(role=='penitip'){
         return order['status'] == activeStatus;
+      }else{
+        if(idJabatan == 'J-6697'){
+          return order['status'] == activeStatus;
+        }else{
+          return order['status_pengiriman'] == activeStatus;
+        }
       }
     }).toList();
 
@@ -284,7 +356,7 @@ class _HistoryPageState extends State<HistoryPage> {
                         }
                       } else {
                         final foto = order['gallery'];
-                        print('foto_barang penitip: ${order['gallery']}');
+                        // print('foto_barang penitip: ${order['gallery']}');
                         if (order['gallery'] != null &&
                             order['gallery'] is List &&
                             order['gallery'].isNotEmpty) {
@@ -307,13 +379,23 @@ class _HistoryPageState extends State<HistoryPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(role == 'pembeli'
-                                  ? 'Tanggal Pembelian: ${formatTanggal(order['tanggal_pembelian'])}'
-                                  : 'Tanggal Penitipan: ${formatTanggal(order['tanggal_penitipan'])}'),
+                              if (role == 'pembeli')
+                                Text(
+                                    'Tanggal Pembelian: ${formatTanggal(order['tanggal_pembelian'])}')
+                              else if (role == 'penitip')
+                                Text(
+                                    'Tanggal Penitipan: ${formatTanggal(order['tanggal_penitipan'])}')
+                              else if (role == 'pegawai' &&
+                                  idJabatan == 'J-7671')
+                                Text(
+                                    'Tanggal Pengiriman: ${formatTanggal(order['tanggal_pengiriman-pengambilan'])}'),
                               const SizedBox(height: 4),
-                              Text(role == 'pembeli'
-                                  ? 'Tanggal Selesai: ${formatTanggal((order as Map<String, dynamic>)['tanggal_pengiriman-pengambilan'])}'
-                                  : 'Kadaluarsa: ${formatTanggal(order['tanggal_kadaluarsa'])}'),
+                              if (role == 'pembeli')
+                                Text(
+                                    'Tanggal Selesai: ${formatTanggal(order['tanggal_pengiriman-pengambilan'])}')
+                              else if (role == 'penitip')
+                                Text(
+                                    'Kadaluarsa: ${formatTanggal(order['tanggal_kadaluarsa'])}'),
                               const SizedBox(height: 12),
                               Row(
                                 children: [
@@ -348,7 +430,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          role == 'pembeli'
+                                          role == 'pembeli' || (role=='pegawai' &&idJabatan=='J-7671')
                                               ? detailItems.isNotEmpty
                                                   ? detailItems[0]
                                                           ['nama_barang'] ??
@@ -362,7 +444,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                           style: const TextStyle(
                                               fontWeight: FontWeight.bold),
                                         ),
-                                        if (role == 'pembeli' &&
+                                        if ((role == 'pembeli'|| (role=='pegawai' &&idJabatan=='J-7671')) &&
                                             detailItems.length > 1)
                                           Text(
                                               '+ ${detailItems.length - 1} produk lainnya'),
@@ -389,7 +471,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                 width: double.infinity,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    if (role == 'pembeli') {
+                                    if (role == 'pembeli'||(role=='pegawai'&&idJabatan=='J-7671')) {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -426,9 +508,19 @@ class _HistoryPageState extends State<HistoryPage> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                   ),
-                                  child: Text(role == 'pembeli'
-                                      ? 'Detail Pesanan'
-                                      : 'Detail Penitipan'),
+                                  child: Text(
+                                    role == 'pembeli'
+                                        ? 'Detail Pesanan'
+                                        : (role == 'penitip'
+                                            ? 'Detail Penitipan'
+                                            : (role == 'pegawai'
+                                                ? (idJabatan == 'J-7671'
+                                                    ? 'Detail Pengiriman'
+                                                    : (idJabatan == 'J-6697'
+                                                        ? 'Detail Komisi'
+                                                        : 'Detail'))
+                                                : 'Detail')),
+                                  ),
                                 ),
                               ),
                             ],

@@ -22,11 +22,42 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
   Timer? countdownTimer;
   String timeLeft = "";
   bool isLoading = true;
+  String? role;
+  String? token;
+  int? userId;
+  String? idJabatan;
 
   @override
   void initState() {
     super.initState();
-    fetchOrder();
+    _loadUserAndFetchOrder(); // Call the new combined function
+  }
+
+  Future<void> _loadUserAndFetchOrder() async {
+    await _loadUserData(); // Load user data first
+    await fetchOrder(); // Then fetch the order
+  }
+
+  Future<void> _loadUserData() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? userDataString = prefs.getString('user');
+
+    role = prefs.getString('role');
+    token = prefs.getString('token');
+    if (userDataString != null) {
+      Map<String, dynamic> userData = json.decode(userDataString);
+      idJabatan = userData['id_jabatan'];
+      if (role == 'pembeli') {
+        userId = prefs.getInt('id_pembeli') ?? 0;
+      } else if (role == 'penitip') {
+        userId = prefs.getInt('id_penitip') ?? 0;
+      } else if (role == 'pegawai') {
+        userId = int.tryParse(userData['id_pegawai'].toString()) ?? 0;
+      } else {
+        userId = 0;
+        print('Warning: Unrecognized or missing role.');
+      }
+    }
   }
 
   Future<void> fetchOrder() async {
@@ -116,6 +147,60 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
     }
   }
 
+  Future<void> _completeDelivery() async {
+    if (order == null || order!['id_pembelian'] == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Order ID not available.')),
+        );
+      }
+      return;
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      final url =
+          '$backendBaseUrl/api/Pembelian/Pengiriman/${order!['id_pembelian']}';
+      final res = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (res.statusCode == 200) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Pengiriman berhasil diselesaikan!')),
+          );
+        }
+        fetchOrder(); 
+      } else {
+        
+        final responseBody = res.body;
+        final decodedBody = json.decode(responseBody);
+        String errorMessage =
+            decodedBody['message'] ?? 'Gagal menyelesaikan pengiriman.';
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMessage)),
+          );
+        }
+        print('Complete delivery failed: ${res.statusCode} - $errorMessage');
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error completing delivery: $e')),
+        );
+      }
+      print('Error completing delivery: $e');
+    }
+  }
+
   @override
   void dispose() {
     countdownTimer?.cancel();
@@ -138,6 +223,7 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
 
     final items = order!['detail__pembelians'] as List;
     final status = order!['status'];
+    final pengiriman = order!['status_pengiriman'];
     final total = (order!['harga_barang'] ?? 0) -
         (order!['potongan_harga'] ?? 0) +
         (order!['ongkir'] ?? 0);
@@ -206,9 +292,12 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
             SizedBox(height: 16),
             Text('Order Summary',
                 style: TextStyle(fontWeight: FontWeight.bold)),
-            Text('Subtotal: ${order!['harga_barang'] != null ? 'Rp ${order!['harga_barang']}' : '-'}'),
-            Text('Discount: ${order!['potongan_harga'] != null ? 'Rp ${order!['potongan_harga']}' : '-'}'),
-            Text('Delivery Fee: ${order!['ongkir'] != null ? 'Rp ${order!['ongkir']}' : '-'}'),
+            Text(
+                'Subtotal: ${order!['harga_barang'] != null ? 'Rp ${order!['harga_barang']}' : '-'}'),
+            Text(
+                'Discount: ${order!['potongan_harga'] != null ? 'Rp ${order!['potongan_harga']}' : '-'}'),
+            Text(
+                'Delivery Fee: ${order!['ongkir'] != null ? 'Rp ${order!['ongkir']}' : '-'}'),
             Text('Total: Rp $total'),
             SizedBox(height: 16),
             if (status == "Proses") ...[
@@ -217,25 +306,46 @@ class _OrderDetailPageState extends State<OrderDetailPage> {
               ElevatedButton(onPressed: pickFile, child: Text('Pilih File')),
               if (selectedFile != null)
                 Text(selectedFile!.path.split('/').last),
-            //   ElevatedButton(onPressed: uploadBukti, child: Text('Kirim')),
-            // ] else if (order!['bukti_pembayaran'] != null &&
-            //     order!['bukti_pembayaran']
-            //         .toString()
-            //         .startsWith('data:image')) ...[
-            //   Text('Bukti pembayaran:'),
-            //   Image.memory(
-            //     base64Decode(
-            //         order!['bukti_pembayaran'].toString().split(',').last),
-            //     width: 100,
-            //   ),
-            // ] else if (order!['bukti_pembayaran'] != null) ...[
-            //   Text('Bukti pembayaran (file path):'),
-            //   Image.network(
-            //     '$backendBaseUrl/storage/BuktiPembayaran/${order!['bukti_pembayaran']}',
-            //     width: 100,
-            //   ),
-            //   Text(order!['bukti_pembayaran']),
+              //   ElevatedButton(onPressed: uploadBukti, child: Text('Kirim')),
+              // ] else if (order!['bukti_pembayaran'] != null &&
+              //     order!['bukti_pembayaran']
+              //         .toString()
+              //         .startsWith('data:image')) ...[
+              //   Text('Bukti pembayaran:'),
+              //   Image.memory(
+              //     base64Decode(
+              //         order!['bukti_pembayaran'].toString().split(',').last),
+              //     width: 100,
+              //   ),
+              // ] else if (order!['bukti_pembayaran'] != null) ...[
+              //   Text('Bukti pembayaran (file path):'),
+              //   Image.network(
+              //     '$backendBaseUrl/storage/BuktiPembayaran/${order!['bukti_pembayaran']}',
+              //     width: 100,
+              //   ),
+              //   Text(order!['bukti_pembayaran']),
             ],
+            SizedBox(height: 16),
+            //add button at bottom of the screen for onclicked selesaikan pengiriman using api of static const String backendBaseUrl = 'http://10.0.2.2:8000';api/Pembelian/Pengiriman/{id} //if pegawai with id_jabatan ==J-7671
+            if (role == 'pegawai' &&
+                idJabatan == 'J-7671' &&
+                pengiriman ==
+                    'Pegiriman') 
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _completeDelivery,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF50B794), 
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                  ),
+                  child: const Text(
+                    'Selesaikan Pengiriman',
+                    style: TextStyle(fontSize: 18),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
