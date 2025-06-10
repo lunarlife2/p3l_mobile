@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mobile_p3l/detail_komisi.dart';
 import 'package:mobile_p3l/screens/dashboard_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mobile_p3l/merch.dart';
@@ -136,7 +137,7 @@ class _HistoryPageState extends State<HistoryPage> {
       } else if (role == 'penitip') {
         userId = prefs.getInt('id_penitip') ?? 0;
       } else if (role == 'pegawai') {
-        userId = int.tryParse(userData['id_pegawai'].toString())  ?? 0;
+        userId = int.tryParse(userData['id_pegawai'].toString()) ?? 0;
       } else {
         userId = 0;
         print('Warning: Unrecognized or missing role.');
@@ -160,11 +161,7 @@ class _HistoryPageState extends State<HistoryPage> {
     } else if (role == 'pegawai') {
       if (idJabatan == 'J-6697') {
         statuses = [
-          'DiJual',
-          'DiDonasikan',
-          'DiKembalikan',
           'DiBeli',
-          'Kadaluarsa'
         ];
       } else if (idJabatan == 'J-7671') {
         statuses = ['Pegiriman', 'Sampai', 'DiSiapkan'];
@@ -286,12 +283,12 @@ class _HistoryPageState extends State<HistoryPage> {
     final filteredOrders = _orders.where((order) {
       if (role == 'pembeli') {
         return order['status'] == activeStatus;
-      } else if(role=='penitip'){
+      } else if (role == 'penitip') {
         return order['status'] == activeStatus;
-      }else{
-        if(idJabatan == 'J-6697'){
+      } else {
+        if (idJabatan == 'J-6697') {
           return order['status'] == activeStatus;
-        }else{
+        } else {
           return order['status_pengiriman'] == activeStatus;
         }
       }
@@ -430,7 +427,9 @@ class _HistoryPageState extends State<HistoryPage> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         Text(
-                                          role == 'pembeli' || (role=='pegawai' &&idJabatan=='J-7671')
+                                          role == 'pembeli' ||
+                                                  (role == 'pegawai' &&
+                                                      idJabatan == 'J-7671')
                                               ? detailItems.isNotEmpty
                                                   ? detailItems[0]
                                                           ['nama_barang'] ??
@@ -440,11 +439,13 @@ class _HistoryPageState extends State<HistoryPage> {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          'Rp ${(role == 'pembeli' ? (detailItems.isNotEmpty ? detailItems[0]['harga_barang'] ?? 0 : 0) : order['harga_barang'] ?? 0)}',
+                                          'Rp ${((role == 'pembeli' || (role == 'pegawai' && idJabatan == 'J-7671')) ? (detailItems.isNotEmpty ? detailItems[0]['harga_barang'] ?? 0 : 0) : (role == 'penitip' ? (order['harga_barang'] ?? 0) : ((role == 'pegawai' && idJabatan == 'J-6697') ? (order['komisi'][0]['komisi_hunter'] ?? 0) : 0)))}',
                                           style: const TextStyle(
                                               fontWeight: FontWeight.bold),
                                         ),
-                                        if ((role == 'pembeli'|| (role=='pegawai' &&idJabatan=='J-7671')) &&
+                                        if ((role == 'pembeli' ||
+                                                (role == 'pegawai' &&
+                                                    idJabatan == 'J-7671')) &&
                                             detailItems.length > 1)
                                           Text(
                                               '+ ${detailItems.length - 1} produk lainnya'),
@@ -471,7 +472,9 @@ class _HistoryPageState extends State<HistoryPage> {
                                 width: double.infinity,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    if (role == 'pembeli'||(role=='pegawai'&&idJabatan=='J-7671')) {
+                                    if (role == 'pembeli' ||
+                                        (role == 'pegawai' &&
+                                            idJabatan == 'J-7671')) {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
@@ -481,12 +484,30 @@ class _HistoryPageState extends State<HistoryPage> {
                                           ),
                                         ),
                                       );
-                                    } else {
+                                    } else if (role=='penitip'){
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) =>
                                               DetailPenitipanPage(
+                                            data: order,
+                                            kategori: _kategori,
+                                            pegawai: _pegawai,
+                                            gallery: (order['gallery']
+                                                        as List<dynamic>?)
+                                                    ?.map((e) => Map<String,
+                                                        dynamic>.from(e))
+                                                    .toList() ??
+                                                [],
+                                          ),
+                                        ),
+                                      );
+                                    }else{
+                                       Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              DetailKomisiPage(
                                             data: order,
                                             kategori: _kategori,
                                             pegawai: _pegawai,
