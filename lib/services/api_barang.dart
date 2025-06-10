@@ -1,5 +1,6 @@
 // lib/services/api_barang.dart
 import 'dart:convert';
+import 'dart:ffi';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -157,4 +158,56 @@ class ApiBarang {
       throw Exception('Error ambil produk berdasarkan penitip: $e');
     }
   }
+
+  Future<int?> countPenitipanBarangByHunter(int id) async {
+  final url = Uri.parse('$baseUrl/PenitipanBarang/Hunter/count/$id');
+
+  try {
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final countData = data['data'];
+
+      if (countData == null) {
+        print('countData is null');
+        return null;
+      }
+
+      return countData is int ? countData : int.tryParse(countData.toString());
+    } else {
+      print('Failed to fetch count: ${response.statusCode}');
+      return null;
+    }
+  } catch (e) {
+    print('Error fetching count: $e');
+    return null;
+  }
+}
+
+  Future<int?> countTotalKomisiHunter(int id) async {
+  final url = Uri.parse('$baseUrl/Komisi/Pegawai/count/$id');
+
+  try {
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final countData = data['data'];
+
+      if (countData == null) {
+        print('countData is null');
+        return null;
+      }
+
+      return countData is int ? countData : int.tryParse(countData.toString());
+    } else {
+      print('Failed to fetch count: ${response.statusCode}');
+      return null;
+    }
+  } catch (e) {
+    print('Error fetching count: $e');
+    return null;
+  }
+}
 }
